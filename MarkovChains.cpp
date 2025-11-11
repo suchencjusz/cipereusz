@@ -10,18 +10,13 @@
 #include <dpp/json.h>
 
 #include "MarkovChains.h"
-
+#include "Utils.h"
 
 const std::string START_TOKEN = "$START";
 const std::string END_TOKEN = "$END";
 
 using json = nlohmann::json;
 
-std::string to_lower_cpp(std::string s) {
-    std::transform(s.begin(), s.end(), s.begin(),
-                   [](unsigned char c){ return std::tolower(c); });
-    return s;
-}
 
 std::string MarkovChains::word_process(const std::string& word) const {
     if (word.rfind("http:", 0) == 0 || word.rfind("https:", 0) == 0) {
@@ -121,6 +116,7 @@ void MarkovChains::save_model(const std::string& filename) const {
         std::cerr << "Could not save model, failed to open " << filename << std::endl;
         return;
     }
+
     json model_json = brain;
 
     try {
@@ -135,19 +131,22 @@ void MarkovChains::save_model(const std::string& filename) const {
 
 void MarkovChains::load_model(const std::string& filename) {
     std::ifstream file(filename);
+
     if (!file.is_open()) {
         std::cerr << "Model file not found: " << filename << ". Starting with an empty model." << std::endl;
         return;
     }
+
     json model_json;
+
     try {
         file >> model_json;
     } catch (json::parse_error& e) {
         std::cerr << "JSON parsing error! " << e.what() << std::endl;
         return;
     }
+
     try {
-        // Konwersja jest bezpośrednia
         brain = model_json.get<Brain>();
     } catch (const std::exception& e) {
         std::cerr << "Error converting JSON->Model! " << e.what() << std::endl;

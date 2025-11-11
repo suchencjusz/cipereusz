@@ -9,7 +9,13 @@
 #include <string>
 #include <dpp/dpp.h>
 
-bool is_admin(const dpp::cluster& bot, const dpp::slashcommand_t& command_event) {
+inline std::string to_lower_cpp(std::string s) {
+    std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c){ return std::tolower(c); });
+    return s;
+}
+
+
+inline bool is_admin(const dpp::cluster& bot, const dpp::slashcommand_t& command_event) {
     auto guild_id = command_event.command.guild_id;
 
     dpp::guild* guild = dpp::find_guild(command_event.command.guild_id);

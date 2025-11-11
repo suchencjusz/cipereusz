@@ -14,7 +14,8 @@ using json = nlohmann::json;
 
 struct Config {
     std::string discord_token;
-    std::string model_path;
+    std::string model_path_n_one;
+    std::string model_path_n_two;
 
     void load_config(const std::string& config_file) {
         std::ifstream f(config_file);
@@ -24,7 +25,8 @@ struct Config {
 
             json default_config = {
                 {"discord_token", "YOUR_DISCORD_BOT_TOKEN_HERE"},
-                {"model_path", "model.json"}
+                {"model_path_n_one", "model_n_one.json"},
+                {"model_path_n_two", "model_n_two.json"}
             };
 
             try {
@@ -43,7 +45,8 @@ struct Config {
         json data = json::parse(f);
 
         discord_token = data.at("discord_token");
-        model_path = data.at("model_path");
+        model_path_n_one = data.at("model_path_n_one");
+        model_path_n_two = data.at("model_path_n_two");
 
         std::cerr << "Config loaded successfully." << std::endl;
     }

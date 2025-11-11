@@ -13,6 +13,8 @@ add_executable(cipereusz main.cpp
         MarkovChains.cpp
         Config.h
         Utils.h
+        MarkovChainsNGram.h
+        MarkovChainsNGram.cpp
 )
 
 target_link_libraries(cipereusz PRIVATE dpp::dpp)

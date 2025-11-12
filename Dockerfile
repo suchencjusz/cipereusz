@@ -10,14 +10,12 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 COPY CMakeLists.txt .
-
-RUN cmake -B build -DCMAKE_BUILD_TYPE=Release
-
 COPY . .
 
+RUN cmake -B build -DCMAKE_BUILD_TYPE=Release
 RUN cmake --build build -j$(nproc)
 
-
+# final build
 FROM debian:bookworm-slim
 LABEL org.opencontainers.image.description="cipereusz discord bot"
 

@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y \
 COPY CMakeLists.txt .
 COPY . .
 
-RUN cmake -B build -DCMAKE_BUILD_TYPE=Release
+RUN cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF
 RUN cmake --build build -j$(nproc)
 
 # final build

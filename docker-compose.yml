@@ -1,0 +1,11 @@
+services:
+  cipereusz-bot:
+
+    build: .
+    image: cipereusz:latest
+
+    restart: always
+
+#    volumes:
+#      - ./config_cipereusz.json:/app/config_cipereusz.json:ro
+#      - ./model.json:/app/model.json

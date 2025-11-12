@@ -19,10 +19,10 @@ const int SECOND_MODEL_N = 2;
 MarkovChainsNGram scd_mc(SECOND_MODEL_N);
 std::mutex scd_mc_mutex;
 
-
 Config cfg;
 
 int AUTO_MESSAGES_COUNTER = 0;
+int SAVE_MODELS_COUNTER = 0;
 
 //
 // helper functions utils
@@ -223,7 +223,7 @@ int main() {
 
         AUTO_MESSAGES_COUNTER++;
 
-        if (AUTO_MESSAGES_COUNTER % 10 != 0) {
+        if (AUTO_MESSAGES_COUNTER % 12 != 0) {
             return;
         }
 
@@ -236,6 +236,16 @@ int main() {
 
         if (!generated_sentence.empty()) {
             event.reply(generated_sentence);
+        }
+
+        if (SAVE_MODELS_COUNTER % 100 != 0) {
+            SAVE_MODELS_COUNTER = 0;
+
+            std::scoped_lock lock(mc_mutex);
+            mc.save_model(cfg.model_path_n_one);
+
+            std::scoped_lock lock2(scd_mc_mutex);
+            scd_mc.save_model(cfg.model_path_n_two);
         }
     });
 

@@ -4,9 +4,15 @@ project(cipereusz)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-set(dpp_DIR ${PROJECT_SOURCE_DIR}/vendor/dpp/lib/cmake/dpp)
 
-find_package(dpp 10.1.3 REQUIRED)
+include(FetchContent)
+
+FetchContent_Declare(
+        dpp
+        GIT_REPOSITORY https://github.com/brainboxdotcc/DPP.git
+        GIT_TAG        v10.1.3
+)
+FetchContent_MakeAvailable(dpp)
 
 add_executable(cipereusz main.cpp
         MarkovChains.h
@@ -17,4 +23,4 @@ add_executable(cipereusz main.cpp
         MarkovChainsNGram.cpp
 )
 
-target_link_libraries(cipereusz PRIVATE dpp::dpp)
+target_link_libraries(cipereusz PRIVATE dpp)

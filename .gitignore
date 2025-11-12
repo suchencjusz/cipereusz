@@ -92,5 +92,7 @@ fabric.properties
 .env/
 .env
 messages.txt
+cfg.json
+model_data/
 
 # End of https://www.toptal.com/developers/gitignore/api/clion+all

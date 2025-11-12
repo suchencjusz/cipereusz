@@ -1,0 +1,5 @@
+{
+  "discord_token": "",
+  "model_path_n_one": "/data/model_n_one.json",
+  "model_path_n_two": "/data/model_n_two.json"
+}

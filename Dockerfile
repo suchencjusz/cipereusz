@@ -29,9 +29,14 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 RUN useradd -m -s /bin/bash nonroot
-USER nonroot
+
 WORKDIR /app
 
 COPY --from=builder --chown=nonroot:nonroot /app/build/cipereusz .
+COPY --chown=nonroot:nonroot entrypoint.sh /app/entrypoint.sh
 
-CMD ["./cipereusz"]
+RUN chmod +x /app/cipereusz /app/entrypoint.sh
+
+USER nonroot
+
+ENTRYPOINT ["/app/entrypoint.sh"]

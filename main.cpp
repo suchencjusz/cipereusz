@@ -65,7 +65,7 @@ void dpp_load_from_txt(dpp::cluster &bot, const dpp::slashcommand_t &event) {
         return;
     }
 
-    dpp::snowflake attachment_id = std::get<dpp::snowflake>(event.get_parameter("plik"));
+    dpp::snowflake attachment_id = std::get<dpp::snowflake>(event.get_parameter("file"));
     dpp::attachment file_attachment = event.command.resolved.attachments.at(attachment_id);
 
     if (!file_attachment.filename.ends_with(".txt")) {

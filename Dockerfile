@@ -17,7 +17,7 @@ RUN cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF || true
 COPY . .
 
 RUN cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF
-RUN cmake --build build -j$(nproc)
+RUN cmake --build build --target cipereusz -j$(nproc)
 
 # final
 FROM debian:bookworm-slim

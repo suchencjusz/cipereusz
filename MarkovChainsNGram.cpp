@@ -40,7 +40,7 @@ std::string MarkovChainsNGram::word_process(const std::string &word) const {
         return word;
     }
 
-    return to_lower_cpp(word);
+    return to_lower_cpp(remove_interpunction(word));
 }
 
 //
@@ -201,7 +201,7 @@ void MarkovChainsNGram::save_model(const std::string &filename) const {
     root["model"] = model_data;
 
     try {
-        file << root.dump(4);
+        file << root.dump();
     } catch (const std::exception &e) {
         std::cerr << "JSON dump error! " << e.what() << std::endl;
         return;

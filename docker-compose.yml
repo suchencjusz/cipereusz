@@ -1,8 +1,8 @@
 services:
   cipereusz-bot:
-    build: .
-#    image: suchencjusz/cipereusz:latest
+#    build: .
+    image: suchencjusz/cipereusz:latest
     restart: always
     volumes:
       - ./cfg.json:/app/config_cipereusz.json:ro
-      - ./model_data:/data
+      - ./cipereusz-bot-data:/cipereusz-bot-data

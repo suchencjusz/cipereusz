@@ -9,6 +9,16 @@
 #include <string>
 #include <dpp/dpp.h>
 
+inline std::string remove_interpunction(const std::string& str) {
+    std::string result;
+    for (char c : str) {
+        if (!std::ispunct(static_cast<unsigned char>(c))) {
+            result += c;
+        }
+    }
+    return result;
+}
+
 inline std::string to_lower_cpp(std::string s) {
     std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c){ return std::tolower(c); });
     return s;

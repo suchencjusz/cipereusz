@@ -94,5 +94,6 @@ fabric.properties
 messages.txt
 cfg.json
 model_data/
+cipereusz-bot-data/
 
 # End of https://www.toptal.com/developers/gitignore/api/clion+all

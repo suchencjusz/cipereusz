@@ -24,22 +24,6 @@ inline std::string to_lower_cpp(std::string s) {
     return s;
 }
 
-
-inline bool is_admin(const dpp::cluster& bot, const dpp::slashcommand_t& command_event) {
-    auto guild_id = command_event.command.guild_id;
-
-    dpp::guild* guild = dpp::find_guild(command_event.command.guild_id);
-
-    if (guild) {
-        dpp::permission user_perms = guild->base_permissions(command_event.command.member);
-        if (user_perms & dpp::p_administrator) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
 inline std::string get_last_word(std::string_view text) {
     constexpr std::string_view whitespace = " \t\n\r";
 

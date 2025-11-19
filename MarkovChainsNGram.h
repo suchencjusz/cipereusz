@@ -8,7 +8,6 @@
 #include <map>
 #include <random>
 #include <string>
-#include <vector>
 #include <deque>
 
 using StatePrefix = std::deque<std::string>;

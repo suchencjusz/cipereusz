@@ -6,10 +6,7 @@
 #include <fstream>
 #include <iostream>
 #include <algorithm>
-#include <cctype>
 #include <vector>
-
-#include <dpp/json.h>
 
 #include "MarkovChainsNGram.h"
 #include "Utils.h"

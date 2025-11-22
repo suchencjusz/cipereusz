@@ -137,7 +137,25 @@ int main() {
     );
 
     dpp::cluster &bot = *bot_ptr;
-    bot.on_log(dpp::utility::cout_logger());
+
+    auto severity_to_string = [](int sev) -> std::string {
+        switch(sev) {
+            case dpp::ll_trace: return "TRACE";
+            case dpp::ll_debug: return "DEBUG";
+            case dpp::ll_info: return "INFO";
+            case dpp::ll_warning: return "WARN";
+            case dpp::ll_error: return "ERROR";
+            case dpp::ll_critical: return "CRITICAL";
+            default: return "UNKNOWN";
+        }
+    };
+
+    bot.on_log([&](const dpp::log_t &event) {
+        std::string msg = "[" + severity_to_string(event.severity) + "] " + event.message;
+        log_msg(msg);
+    });
+
+    // bot.on_log(dpp::utility::cout_logger());
 
     bot.on_slashcommand([&dpp_commands](const dpp::slashcommand_t &event) {
         if (event.command.get_command_name() == "load_from_txt")

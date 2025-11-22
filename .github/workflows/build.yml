@@ -12,16 +12,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Cache CMake build
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache/ccache
-            build
-          key: ${{ runner.os }}-cmake-${{ hashFiles('**/CMakeLists.txt', '**/*.cpp', '**/*.h') }}
-          restore-keys: |
-            ${{ runner.os }}-cmake-
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
@@ -37,5 +27,5 @@ jobs:
           context: .
           push: true
           tags: ${{ secrets.DOCKER_HUB_USERNAME }}/cipereusz:latest
-          cache-from: type=registry,ref=${{ secrets.DOCKER_HUB_USERNAME }}/cipereusz:buildcache
-          cache-to: type=registry,ref=${{ secrets.DOCKER_HUB_USERNAME }}/cipereusz:buildcache,mode=max
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

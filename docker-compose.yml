@@ -2,7 +2,7 @@ services:
   cipereusz-bot:
 #    build: .
     image: suchencjusz/cipereusz:latest
-    restart: always
+    restart: unless-stopped
     volumes:
       - ./cfg.json:/app/config_cipereusz.json:ro
       - ./cipereusz-bot-data:/cipereusz-bot-data

@@ -7,19 +7,24 @@ RUN apt-get update && apt-get install -y \
     git \
     libssl-dev \
     zlib1g-dev \
+    ccache \
     && rm -rf /var/lib/apt/lists/*
+
+ENV CCACHE_DIR=/root/.ccache
+ENV PATH="/usr/lib/ccache:$PATH"
 
 COPY CMakeLists.txt .
 
-# tylko do zaleznosci
-RUN cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF || true
+RUN cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_CXX_COMPILER_LAUNCHER=ccache || true
 
 COPY . .
 
-RUN cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF
-RUN cmake --build build --target cipereusz -j$(nproc)
+RUN --mount=type=cache,target=/root/.ccache \
+    cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
-# final
+RUN --mount=type=cache,target=/root/.ccache \
+    cmake --build build --target cipereusz -j$(nproc)
+
 FROM debian:bookworm-slim
 LABEL org.opencontainers.image.description="cipereusz discord bot"
 

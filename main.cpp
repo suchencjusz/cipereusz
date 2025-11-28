@@ -197,6 +197,20 @@ int main() {
             return;
         }
 
+        SAVE_MODELS_COUNTER++;
+
+        if (SAVE_MODELS_COUNTER % 25 == 0) {
+            SAVE_MODELS_COUNTER = 0;
+
+            std::cout << "Auto-saving models..." << std::endl;
+            std::cout << "Model 1N size: " << mc.get_brain_size() << " states." << std::endl;
+            std::cout << "Model 2N size: " << scd_mc.get_brain_size() << " states." << std::endl;
+
+            std::scoped_lock lock(mc_mutex, scd_mc_mutex);
+            mc.save_model(cfg.model_path_n_one);
+            scd_mc.save_model(cfg.model_path_n_two);
+        }
+
         AUTO_MESSAGES_COUNTER++;
 
         if (AUTO_MESSAGES_COUNTER % 14 != 0) {
@@ -212,16 +226,6 @@ int main() {
 
         if (!generated_sentence.empty()) {
             event.reply(generated_sentence);
-        }
-
-        SAVE_MODELS_COUNTER++;
-
-        if (SAVE_MODELS_COUNTER % 50 == 0) {
-            SAVE_MODELS_COUNTER = 0;
-
-            std::scoped_lock lock(mc_mutex, scd_mc_mutex);
-            mc.save_model(cfg.model_path_n_one);
-            scd_mc.save_model(cfg.model_path_n_two);
         }
     });
 

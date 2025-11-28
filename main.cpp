@@ -44,7 +44,7 @@ std::string process_word_for_prefix(const std::string &word) {
 //
 
 void shutdown_handler(int signum) {
-    std::cout << std::endl << "Shutting down gracefully..." << std::endl;
+    log_msg("Shutting down gracefully...", log_level::INFO);
 
     if (!cfg.model_path_n_one.empty()) {
         std::scoped_lock lock(mc_mutex, scd_mc_mutex);
@@ -220,9 +220,9 @@ int main() {
         if (SAVE_MODELS_COUNTER % 25 == 0) {
             SAVE_MODELS_COUNTER = 0;
 
-            std::cout << "Auto-saving models..." << std::endl;
-            std::cout << "Model 1N size: " << mc.get_brain_size() << " states." << std::endl;
-            std::cout << "Model 2N size: " << scd_mc.get_brain_size() << " states." << std::endl;
+            log_msg("Auto-saving models...", log_level::INFO);
+            log_msg("Model 1N size: " + std::to_string(mc.get_brain_size()) + " states.", log_level::INFO);
+            log_msg("Model 2N size: " + std::to_string(scd_mc.get_brain_size()) + " states.", log_level::INFO);
 
             std::scoped_lock lock(mc_mutex, scd_mc_mutex);
             mc.save_model(cfg.model_path_n_one);

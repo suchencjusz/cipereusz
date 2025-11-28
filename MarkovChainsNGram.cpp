@@ -28,7 +28,8 @@ std::string MarkovChainsNGram::word_process(const std::string &word) const {
     }
 
     // discord pings
-    if (word.rfind("<a:", 0) == 0 || word.rfind("<:", 0) == 0 || word.rfind("<@&", 0) == 0 || word.rfind("<@", 0) == 0) {
+    if (word.rfind("<a:", 0) == 0 || word.rfind("<:", 0) == 0 || word.rfind("<@&", 0) == 0 || word.rfind("<@", 0) ==
+        0) {
         // bot id
         if (word.contains("1437781243751301264")) {
             return "";
@@ -119,7 +120,6 @@ std::string MarkovChainsNGram::generate_sentence(int max_length, StatePrefix sta
             for (const auto &w: start_prefix) {
                 ss << w << " ";
             }
-
         } else {
             current_prefix.assign(n, START_TOKEN);
         }
@@ -178,10 +178,11 @@ std::string MarkovChainsNGram::generate_sentence(int max_length, StatePrefix sta
 
 
 void MarkovChainsNGram::save_model(const std::string &filename) const {
-    std::cout << "Saving N-Gram model to JSON: " << filename << "..." << std::endl;
+    log_msg("Saving N-Gram model to JSON: " + filename + "...", log_level::INFO);
+
     std::ofstream file(filename);
     if (!file.is_open()) {
-        std::cerr << "Could not save model, failed to open " << filename << std::endl;
+        log_msg("Could not save model, failed to open " + filename, log_level::ERROR);
         return;
     }
 
@@ -200,17 +201,17 @@ void MarkovChainsNGram::save_model(const std::string &filename) const {
     try {
         file << root.dump();
     } catch (const std::exception &e) {
-        std::cerr << "JSON dump error! " << e.what() << std::endl;
+        log_msg(std::string("JSON dump error! ") + e.what(), log_level::ERROR);
         return;
     }
 
-    std::cout << "Model saved successfully, states: " << brain.size() << std::endl;
+    log_msg("Model saved successfully, states: " + std::to_string(brain.size()), log_level::INFO);
 }
 
 void MarkovChainsNGram::load_model(const std::string &filename) {
     std::ifstream file(filename);
     if (!file.is_open()) {
-        std::cerr << "Model file not found: " << filename << ". Starting with an empty model." << std::endl;
+        log_msg("Model file not found: " + filename + ". Starting with an empty model.", log_level::WARNING);
         return;
     }
 
@@ -218,7 +219,7 @@ void MarkovChainsNGram::load_model(const std::string &filename) {
     try {
         file >> root;
     } catch (json::parse_error &e) {
-        std::cerr << "JSON parsing error! " << e.what() << std::endl;
+        log_msg(std::string("JSON parsing error! ") + e.what(), log_level::ERROR);
         return;
     }
 
@@ -228,14 +229,15 @@ void MarkovChainsNGram::load_model(const std::string &filename) {
         int loaded_n = root.at("n").get<int>();
 
         if (loaded_n != this->n) {
-            std::cerr << "Model file error: 'n' mismatch. File is n=" << loaded_n
-                    << ", but this model instance is n=" << this->n << std::endl;
+            log_msg("Model file error: 'n' mismatch. File is n=" + std::to_string(loaded_n) +
+                    ", but this model instance is n=" + std::to_string(this->n), log_level::ERROR);
+
             return;
         }
 
         json model_data = root.at("model");
         if (!model_data.is_array()) {
-            std::cerr << "Model file error: 'model' field is not an array." << std::endl;
+            log_msg("Model file error: 'model' field is not an array.", log_level::ERROR);
             return;
         }
 
@@ -245,11 +247,11 @@ void MarkovChainsNGram::load_model(const std::string &filename) {
             brain[prefix] = suffixes;
         }
     } catch (const std::exception &e) {
-        std::cerr << "Error converting JSON->Model! " << e.what() << std::endl;
+        log_msg(std::string("Error converting JSON->Model! ") + e.what(), log_level::ERROR);
         brain.clear();
         return;
     }
-    std::cout << "Model loaded successfully, states: " << brain.size() << std::endl;
+    log_msg("Model loaded successfully, states: " + std::to_string(brain.size()), log_level::INFO);
 }
 
 void MarkovChainsNGram::load_model_from_txt_file(const std::string &content) {
@@ -259,8 +261,7 @@ void MarkovChainsNGram::load_model_from_txt_file(const std::string &content) {
 
     train(buffer.str());
 
-    std::cout << "Model loaded from text content." << std::endl;
-    std::cout << "Brain size: " << brain.size() << " states." << std::endl;
+    log_msg("Model loaded from text content. Brain size: " + std::to_string(brain.size()) + " states.", log_level::INFO);
 }
 
 size_t MarkovChainsNGram::get_brain_size() const {

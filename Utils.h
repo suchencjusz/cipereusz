@@ -9,14 +9,47 @@
 #include <string>
 #include <dpp/dpp.h>
 
-inline void log_msg(const std::string& msg) {
+// inline void log_msg(const std::string& msg) {
+//     auto now = std::chrono::system_clock::now();
+//     auto in_time_t = std::chrono::system_clock::to_time_t(now);
+//     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
+//
+//     std::cout << "[" << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %H:%M:%S")
+//               << "." << std::setfill('0') << std::setw(3) << ms.count() << "] "
+//               << " " << msg << std::endl;
+// }
+
+enum class log_level {
+    DPP,
+    DEBUG,
+    INFO,
+    WARNING,
+    ERROR
+};
+
+inline void log_msg(const std::string& msg, log_level level = log_level::DPP) {
+    std::string prefix;
+
+    if (level != log_level::DPP) {
+        prefix = "[cipereusz] ";
+    }
+
+    switch (level) {
+        case log_level::DEBUG: prefix += "[DEBUG] "; break;
+        case log_level::INFO: prefix += "[INFO] "; break;
+        case log_level::WARNING: prefix += "[WARNING] "; break;
+        case log_level::ERROR: prefix += "[ERROR] "; break;
+
+        case log_level::DPP: prefix += "[dpp] "; break;
+    }
+
     auto now = std::chrono::system_clock::now();
     auto in_time_t = std::chrono::system_clock::to_time_t(now);
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
 
     std::cout << "[" << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %H:%M:%S")
               << "." << std::setfill('0') << std::setw(3) << ms.count() << "] "
-              << " " << msg << std::endl;
+              << prefix << msg << std::endl;
 }
 
 inline std::string remove_interpunction(const std::string& str) {

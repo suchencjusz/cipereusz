@@ -237,10 +237,9 @@ int main() {
 
         AUTO_MESSAGES_COUNTER = 0;
 
-        std::string generated_sentence; {
-            std::scoped_lock lock(mc_mutex);
-            generated_sentence = generate_sentence(event.msg.content);
-        }
+        std::string generated_sentence;
+        generated_sentence = generate_sentence(event.msg.content);
+
 
         if (!generated_sentence.empty()) {
             event.reply(generated_sentence);
@@ -249,33 +248,21 @@ int main() {
 
     bot.on_ready([&bot](const dpp::ready_t &event) {
         if (dpp::run_once<struct register_bot_commands>()) {
-            // LOAD_FROM_TXT
+            std::vector<dpp::slashcommand> commands;
+
+            // Zbierz wszystkie komendy
             dpp::slashcommand train_cmd("load_from_txt", "Trains bot from txt file (line by line) (Admin)", bot.me.id);
-            train_cmd.add_option(
-                dpp::command_option(dpp::co_attachment, "file", "Txt file for training ", true)
-            );
+            train_cmd.add_option(dpp::command_option(dpp::co_attachment, "file", "Txt file for training", true));
+            commands.push_back(train_cmd);
 
-            // BRAIN_STATUS
-            dpp::slashcommand brain_status("brain_status", "Shows the current brain size", bot.me.id);
+            commands.push_back(dpp::slashcommand("brain_status", "Shows the current brain size", bot.me.id));
+            commands.push_back(dpp::slashcommand("info", "Info about project", bot.me.id));
+            commands.push_back(dpp::slashcommand("save_models", "Saves the current models to disk (Admin)", bot.me.id));
+            commands.push_back(dpp::slashcommand("get_models", "Gets the current models as files (Admin), sends to DM", bot.me.id));
+            commands.push_back(dpp::slashcommand("change_model", "Changes the current model between 1N and 2N (Admin)", bot.me.id));
 
-            // INFO
-            dpp::slashcommand info_cmd("info", "Info about project", bot.me.id);
-
-            // SAVE_MODELS
-            dpp::slashcommand save_models("save_models", "Saves the current models to disk (Admin)", bot.me.id);
-
-            // GET_MODELS
-            dpp::slashcommand get_models("get_models", "Gets the current models as files (Admin), sends to DM", bot.me.id);
-
-            // CHANGE_MODEL
-            dpp::slashcommand change_model("change_model", "Changes the current model between 1N and 2N (Admin)", bot.me.id);
-
-            bot.global_command_create(train_cmd);
-            bot.global_command_create(brain_status);
-            bot.global_command_create(info_cmd);
-            bot.global_command_create(save_models);
-            bot.global_command_create(get_models);
-            bot.global_command_create(change_model);
+            // Zarejestruj wszystkie na raz
+            bot.global_bulk_command_create(commands);
         }
     });
 

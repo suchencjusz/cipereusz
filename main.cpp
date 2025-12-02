@@ -108,6 +108,16 @@ std::string generate_sentence(const std::string &message) {
     return generated_sentence;
 }
 
+void update_bot_status(dpp::cluster &bot, const std::string &status_message) {
+    if (status_message.length() > 128) {
+        log_msg("Status message too long, cannot update bot presence.", log_level::WARNING);
+        return;
+    }
+
+    bot.set_presence(dpp::presence(dpp::ps_online, dpp::at_custom, status_message));
+    log_msg("Bot status updated to: " + status_message, log_level::DEBUG);
+}
+
 //
 // discord commands
 //
@@ -124,7 +134,15 @@ int main() {
     }
 
     std::unique_ptr<dpp::cluster> bot_ptr = std::make_unique<dpp::cluster>(
-        cfg.discord_token, dpp::i_default_intents | dpp::i_message_content);
+        cfg.discord_token,
+        dpp::i_default_intents | dpp::i_message_content,
+        0, // shards
+        0, // cluster id
+        1,
+        true,
+        dpp::cache_policy::cpol_default, // cache policy
+        1 // pool threads
+    );
 
     dpp_commands dpp_commands
     (
@@ -139,7 +157,7 @@ int main() {
     dpp::cluster &bot = *bot_ptr;
 
     auto severity_to_string = [](int sev) -> std::string {
-        switch(sev) {
+        switch (sev) {
             case dpp::ll_trace: return "TRACE";
             case dpp::ll_debug: return "DEBUG";
             case dpp::ll_info: return "INFO";
@@ -150,8 +168,14 @@ int main() {
         }
     };
 
+
     bot.on_log([&](const dpp::log_t &event) {
+        if (event.severity == dpp::ll_trace) {
+            return;
+        }
+
         std::string msg = "[" + severity_to_string(event.severity) + "] " + event.message;
+
         log_msg(msg);
     });
 
@@ -247,10 +271,11 @@ int main() {
     });
 
     bot.on_ready([&bot](const dpp::ready_t &event) {
+        update_bot_status(bot, "wlasnie sie obudzilem :)");
+
         if (dpp::run_once<struct register_bot_commands>()) {
             std::vector<dpp::slashcommand> commands;
 
-            // Zbierz wszystkie komendy
             dpp::slashcommand train_cmd("load_from_txt", "Trains bot from txt file (line by line) (Admin)", bot.me.id);
             train_cmd.add_option(dpp::command_option(dpp::co_attachment, "file", "Txt file for training", true));
             commands.push_back(train_cmd);
@@ -258,12 +283,39 @@ int main() {
             commands.push_back(dpp::slashcommand("brain_status", "Shows the current brain size", bot.me.id));
             commands.push_back(dpp::slashcommand("info", "Info about project", bot.me.id));
             commands.push_back(dpp::slashcommand("save_models", "Saves the current models to disk (Admin)", bot.me.id));
-            commands.push_back(dpp::slashcommand("get_models", "Gets the current models as files (Admin), sends to DM", bot.me.id));
-            commands.push_back(dpp::slashcommand("change_model", "Changes the current model between 1N and 2N (Admin)", bot.me.id));
+            commands.push_back(dpp::slashcommand("get_models", "Gets the current models as files (Admin), sends to DM",
+                                                 bot.me.id));
+            commands.push_back(dpp::slashcommand("change_model", "Changes the current model between 1N and 2N (Admin)",
+                                                 bot.me.id));
 
-            // Zarejestruj wszystkie na raz
             bot.global_bulk_command_create(commands);
         }
+
+
+        bot.start_timer([&bot](dpp::timer t) {
+            std::string sentence;
+
+            {
+                std::scoped_lock lock(mc_mutex, scd_mc_mutex);
+
+                if (FIRST_MODEL) {
+                    sentence = mc.generate_sentence(50, {}, 1000);
+                } else {
+                    sentence = scd_mc.generate_sentence(50, {}, 1000);
+
+                }
+            }
+
+            if (sentence.empty()) {
+                sentence = "nic nie wymyslilem :c";
+            }
+
+            if (sentence.size() > 128) {
+                sentence.resize(125);
+                sentence += "...";
+            }
+            update_bot_status(bot, sentence);
+        }, 30); // 30 seconds
     });
 
 

@@ -60,6 +60,52 @@ void shutdown_handler(int signum) {
 // utils
 //
 
+std::string get_discord_nick(const dpp::user &usr) {
+    if (!usr.global_name.empty()) {
+        return usr.global_name;
+    }
+    return usr.username;
+}
+
+//
+// zamienia znaczniki discorda z pingami na nicki
+//
+void filter_sentence(std::string &sentence, const dpp::cluster &bot) {
+    size_t start_pos = 0;
+    while ((start_pos = sentence.find("<@", start_pos)) != std::string::npos) {
+        size_t end_pos = sentence.find('>', start_pos);
+        if (end_pos == std::string::npos) {
+            break; // malformed tag
+        }
+
+        std::string id_part = sentence.substr(start_pos + 2, end_pos - (start_pos + 2));
+        if (id_part.empty()) {
+            start_pos = end_pos + 1;
+            continue;
+        }
+
+        try {
+            dpp::snowflake user_id(id_part);
+            dpp::user* user_ptr = dpp::find_user(user_id);
+
+            if (user_ptr) {
+                std::string nick = get_discord_nick(*user_ptr);
+                sentence.replace(start_pos, end_pos - start_pos + 1, "@" + nick);
+                start_pos += nick.length() + 1; // Move past the replaced nick
+            } else {
+                // User not found in cache, skip this tag.
+                start_pos = end_pos + 1;
+            }
+        } catch (const dpp::exception &e) {
+            // Could not parse ID, skip this tag
+            log_msg(std::string("Error parsing user ID from mention: ") + e.what(), log_level::WARNING);
+            start_pos = end_pos + 1;
+        }
+    }
+}
+
+
+
 std::string generate_sentence(const std::string &message) {
     std::string word;
     StatePrefix start_prefix;
@@ -121,6 +167,7 @@ void update_bot_status(dpp::cluster &bot, const std::string &status_message) {
 //
 // discord commands
 //
+
 
 
 int main() {
@@ -300,9 +347,10 @@ int main() {
 
                 if (FIRST_MODEL) {
                     sentence = mc.generate_sentence(50, {}, 1000);
+                    filter_sentence(sentence, bot);
                 } else {
                     sentence = scd_mc.generate_sentence(50, {}, 1000);
-
+                    filter_sentence(sentence, bot);
                 }
             }
 
@@ -315,7 +363,7 @@ int main() {
                 sentence += "...";
             }
             update_bot_status(bot, sentence);
-        }, 30); // 30 seconds
+        }, 20); // 20 seconds
     });
 
 

@@ -252,12 +252,12 @@ int main() {
         if (event.msg.author.id == bot.me.id)
             return;
 
-        if (event.msg.is_dm() == true) {
-            event.reply("I DO NOT RESPOND TO DMs :c");
-            return;
-        }
+        // if (event.msg.is_dm() == true) {
+        //     event.reply("I DO NOT RESPOND TO DMs :c");
+        //     return;
+        // }
 
-        if (event.msg.author.is_bot() == false && !event.msg.content.empty()) {
+        if (event.msg.author.is_bot() == false && !event.msg.content.empty() && event.msg.is_dm() == false) {
             {
                 std::scoped_lock lock(mc_mutex, scd_mc_mutex);
 

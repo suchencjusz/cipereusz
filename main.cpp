@@ -86,7 +86,7 @@ void filter_sentence(std::string &sentence, const dpp::cluster &bot) {
 
         try {
             dpp::snowflake user_id(id_part);
-            dpp::user* user_ptr = dpp::find_user(user_id);
+            dpp::user *user_ptr = dpp::find_user(user_id);
 
             if (user_ptr) {
                 std::string nick = get_discord_nick(*user_ptr);
@@ -103,7 +103,6 @@ void filter_sentence(std::string &sentence, const dpp::cluster &bot) {
         }
     }
 }
-
 
 
 std::string generate_sentence(const std::string &message) {
@@ -167,7 +166,6 @@ void update_bot_status(dpp::cluster &bot, const std::string &status_message) {
 //
 // discord commands
 //
-
 
 
 int main() {
@@ -257,8 +255,18 @@ int main() {
         //     return;
         // }
 
-        if (event.msg.author.is_bot() == false && !event.msg.content.empty() && event.msg.is_dm() == false) {
-            {
+        // sekcja treningu
+        if (event.msg.author.is_bot() == false && !event.msg.content.empty()) {
+            bool train = true;
+
+            if (event.msg.is_dm()) { // 20% szansy na trening w DM
+                static thread_local std::mt19937 gen(std::random_device{}());
+                std::bernoulli_distribution chance_dist(0.2);
+
+                train = chance_dist(gen);
+            }
+
+            if (train) {
                 std::scoped_lock lock(mc_mutex, scd_mc_mutex);
 
                 mc.train(event.msg.content);
@@ -340,9 +348,7 @@ int main() {
 
 
         bot.start_timer([&bot](dpp::timer t) {
-            std::string sentence;
-
-            {
+            std::string sentence; {
                 std::scoped_lock lock(mc_mutex, scd_mc_mutex);
 
                 if (FIRST_MODEL) {

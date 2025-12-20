@@ -244,6 +244,10 @@ int main() {
 
         if (event.command.get_command_name() == "change_model")
             dpp_commands.change_model(event, &FIRST_MODEL);
+
+        if (event.command.get_command_name() == "get_guild_logs")
+            dpp_commands.get_guild_logs(event);
+
     });
 
     bot.on_message_create([&bot](const dpp::message_create_t &event) {
@@ -341,6 +345,8 @@ int main() {
             commands.push_back(dpp::slashcommand("get_models", "Gets the current models as files (Admin), sends to DM",
                                                  bot.me.id));
             commands.push_back(dpp::slashcommand("change_model", "Changes the current model between 1N and 2N (Admin)",
+                                                 bot.me.id));
+            commands.push_back(dpp::slashcommand("get_guild_logs", "Scrapes all text channels in the guild for messages to train on (Admin)",
                                                  bot.me.id));
 
             bot.global_bulk_command_create(commands);

@@ -43,7 +43,12 @@ public:
 
     void get_models(const dpp::slashcommand_t &event);
 
-    void change_model(const dpp::slashcommand_t &event, bool* first_model);
+    void change_model(const dpp::slashcommand_t &event, bool *first_model);
+
+    // historia czatu
+    void fetch_channel_history(const dpp::slashcommand_t& event, dpp::snowflake channel_id, dpp::snowflake before_id, std::shared_ptr<std::vector<nlohmann::json>> all_json_msgs, std::shared_ptr<std::deque<dpp::snowflake>> channels_queue);
+    void process_next_channel_from_queue(const dpp::slashcommand_t& event, std::shared_ptr<std::vector<nlohmann::json>> all_json_msgs, std::shared_ptr<std::deque<dpp::snowflake>> channels_queue);
+    void get_guild_logs(const dpp::slashcommand_t &event);
 };
 
 

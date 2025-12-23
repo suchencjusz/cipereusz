@@ -128,25 +128,23 @@ std::string generate_sentence(const std::string &message) {
         }
     }
 
-    std::string generated_sentence; {
+    std::string generated_sentence;
+
+    if (FIRST_MODEL) {
         std::scoped_lock lock(mc_mutex);
-
-        if (FIRST_MODEL) {
-            if (!start_prefix.empty()) {
-                generated_sentence = mc.generate_sentence(50, start_prefix, 1000);
-            }
-
-            if (generated_sentence.empty()) {
-                generated_sentence = mc.generate_sentence(50, {}, 1000);
-            }
-        } else {
-            if (!start_prefix.empty()) {
-                generated_sentence = scd_mc.generate_sentence(50, start_prefix, 1000);
-            }
-
-            if (generated_sentence.empty()) {
-                generated_sentence = scd_mc.generate_sentence(50, {}, 1000);
-            }
+        if (!start_prefix.empty()) {
+            generated_sentence = mc.generate_sentence(50, start_prefix, 1000);
+        }
+        if (generated_sentence.empty()) {
+            generated_sentence = mc.generate_sentence(50, {}, 1000);
+        }
+    } else {
+        std::scoped_lock lock(scd_mc_mutex);
+        if (!start_prefix.empty()) {
+            generated_sentence = scd_mc.generate_sentence(50, start_prefix, 1000);
+        }
+        if (generated_sentence.empty()) {
+            generated_sentence = scd_mc.generate_sentence(50, {}, 1000);
         }
     }
 
@@ -248,6 +246,12 @@ int main() {
         if (event.command.get_command_name() == "get_guild_logs")
             dpp_commands.get_guild_logs(event);
 
+        if (event.command.get_command_name() == "import_model_from_json_file_one")
+            dpp_commands.import_model_from_json_file_one_gram(event);
+
+        if (event.command.get_command_name() == "import_model_from_json_file_two")
+            dpp_commands.import_model_from_json_file_two_gram(event);
+
     });
 
     bot.on_message_create([&bot](const dpp::message_create_t &event) {
@@ -263,9 +267,9 @@ int main() {
         if (event.msg.author.is_bot() == false && !event.msg.content.empty()) {
             bool train = true;
 
-            if (event.msg.is_dm()) { // 20% szansy na trening w DM
+            if (event.msg.is_dm()) { // 50% szansy na trening w DM
                 static thread_local std::mt19937 gen(std::random_device{}());
-                std::bernoulli_distribution chance_dist(0.2);
+                std::bernoulli_distribution chance_dist(0.5);
 
                 train = chance_dist(gen);
             }
@@ -335,10 +339,12 @@ int main() {
         if (dpp::run_once<struct register_bot_commands>()) {
             std::vector<dpp::slashcommand> commands;
 
+            // trening z pliku txt
             dpp::slashcommand train_cmd("load_from_txt", "Trains bot from txt file (line by line) (Admin)", bot.me.id);
             train_cmd.add_option(dpp::command_option(dpp::co_attachment, "file", "Txt file for training", true));
             commands.push_back(train_cmd);
 
+            // inne pierdolki
             commands.push_back(dpp::slashcommand("brain_status", "Shows the current brain size", bot.me.id));
             commands.push_back(dpp::slashcommand("info", "Info about project", bot.me.id));
             commands.push_back(dpp::slashcommand("save_models", "Saves the current models to disk (Admin)", bot.me.id));
@@ -348,6 +354,15 @@ int main() {
                                                  bot.me.id));
             commands.push_back(dpp::slashcommand("get_guild_logs", "Scrapes all text channels in the guild for messages to train on (Admin)",
                                                  bot.me.id));
+
+            // import modeli
+            dpp::slashcommand import_one_cmd("import_model_from_json_file_one", "Imports 1N model from json file (Admin)", bot.me.id);
+            import_one_cmd.add_option(dpp::command_option(dpp::co_attachment, "file", "JSON file for importing model", true));
+            commands.push_back(import_one_cmd);
+
+            dpp::slashcommand import_two_cmd("import_model_from_json_file_two", "Imports 2N model from json file (Admin)", bot.me.id);
+            import_two_cmd.add_option(dpp::command_option(dpp::co_attachment, "file", "JSON file for importing model", true));
+            commands.push_back(import_two_cmd);
 
             bot.global_bulk_command_create(commands);
         }

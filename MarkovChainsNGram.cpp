@@ -254,14 +254,83 @@ void MarkovChainsNGram::load_model(const std::string &filename) {
     log_msg("Model loaded successfully, states: " + std::to_string(brain.size()), log_level::INFO);
 }
 
+bool MarkovChainsNGram::import_model_from_json_file(const std::string &content, std::string *error) {
+    auto fail = [&](const std::string &msg) -> bool {
+        if (error) {
+            *error = msg;
+        }
+        log_msg(msg, log_level::ERROR);
+        return false;
+    };
+
+    json root;
+    try {
+        root = json::parse(content);
+    } catch (json::parse_error &e) {
+        return fail(std::string("JSON parsing error! ") + e.what());
+    }
+
+    try {
+        if (!root.is_object()) {
+            return fail("Model file error: root JSON is not an object.");
+        }
+        if (!root.contains("n") || !root.at("n").is_number_integer()) {
+            return fail("Model file error: missing or invalid integer field 'n'.");
+        }
+        if (!root.contains("model") || !root.at("model").is_array()) {
+            return fail("Model file error: missing or invalid array field 'model'.");
+        }
+
+        int loaded_n = root.at("n").get<int>();
+        if (loaded_n != this->n) {
+            return fail("Model file error: 'n' mismatch. File is n=" + std::to_string(loaded_n) +
+                        ", but this model instance is n=" + std::to_string(this->n));
+        }
+
+        // Build into a temporary brain to avoid partial imports on error.
+        Brain imported;
+
+        const json model_data = root.at("model");
+        for (const auto &entry: model_data) {
+            if (!entry.is_object()) {
+                return fail("Model file error: entry in 'model' array is not an object.");
+            }
+            if (!entry.contains("prefix") || !entry.contains("suffixes")) {
+                return fail("Model file error: entry missing 'prefix' or 'suffixes'.");
+            }
+
+            StatePrefix prefix = entry.at("prefix").get<StatePrefix>();
+            SuffixMap suffixes = entry.at("suffixes").get<SuffixMap>();
+            imported[std::move(prefix)] = std::move(suffixes);
+        }
+
+        // Replace current model (consistent with load_model())
+        brain = std::move(imported);
+    } catch (const std::exception &e) {
+        brain.clear();
+        return fail(std::string("Error converting JSON->Model! ") + e.what());
+    }
+
+    if (error) {
+        error->clear();
+    }
+    log_msg("Model imported from json content. Brain size: " + std::to_string(brain.size()) + " states.",
+            log_level::INFO);
+    return true;
+}
+
 void MarkovChainsNGram::load_model_from_txt_file(const std::string &content) {
-    brain.clear();
+    // brain.clear();
 
     std::stringstream buffer(content);
 
+    std::size_t brain_size_before = brain.size();
+
     train(buffer.str());
 
-    log_msg("Model loaded from text content. Brain size: " + std::to_string(brain.size()) + " states.", log_level::INFO);
+    log_msg("Model trained from txt file content. Brain size before: " +
+            std::to_string(brain_size_before) + ", after: " +
+            std::to_string(brain.size()) + " states.", log_level::INFO);
 }
 
 size_t MarkovChainsNGram::get_brain_size() const {

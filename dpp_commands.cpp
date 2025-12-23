@@ -20,6 +20,118 @@ bool dpp_commands::is_admin(const dpp::slashcommand_t &event) {
     return false;
 }
 
+void dpp_commands::import_model_from_json_file_one_gram(const dpp::slashcommand_t &event) {
+    event.thinking(true);
+
+    if (!is_admin(event)) {
+        event.reply("You don't have admin permissions to use this command.");
+        return;
+    }
+
+    dpp::snowflake attachment_id = std::get<dpp::snowflake>(event.get_parameter("file"));
+    dpp::attachment file_attachment = event.command.resolved.attachments.at(attachment_id);
+
+    if (!file_attachment.filename.ends_with(".json")) {
+        event.reply("Error: Only .json files are supported for training.");
+        return;
+    }
+
+    bot.request(file_attachment.url, dpp::m_get,
+                [this, event, file_attachment](const dpp::http_request_completion_t &http_event) {
+                    if (http_event.status == 200) {
+                        size_t new_size = 0;
+                        std::string import_error;
+                        bool ok = false;
+                        {
+                            std::scoped_lock lock(mc_mutex);
+                            ok = mc.import_model_from_json_file(http_event.body, &import_error);
+                            new_size = mc.get_brain_size();
+                        }
+
+                        if (!ok) {
+                            if (import_error.size() > 1500) {
+                                import_error.resize(1500);
+                                import_error += "...";
+                            }
+
+                            event.edit_original_response(dpp::message(
+                                "Import failed for file: " + file_attachment.filename + "\n" + import_error
+                            ));
+                            return;
+                        }
+
+                        event.edit_original_response(
+                            dpp::message(
+                                "File " + file_attachment.filename + " imported!\nNew brain size: " +
+                                std::to_string(new_size) + " states."
+                            )
+                        );
+                    } else {
+                        event.edit_original_response(
+                            dpp::message(
+                                "Error downloading file: " + file_attachment.filename + "\n(HTTP Status: " +
+                                std::to_string(http_event.status) + ")")
+                        );
+                    }
+                });
+}
+
+void dpp_commands::import_model_from_json_file_two_gram(const dpp::slashcommand_t &event) {
+    event.thinking(true);
+
+    if (!is_admin(event)) {
+        event.reply("You don't have admin permissions to use this command.");
+        return;
+    }
+
+    dpp::snowflake attachment_id = std::get<dpp::snowflake>(event.get_parameter("file"));
+    dpp::attachment file_attachment = event.command.resolved.attachments.at(attachment_id);
+
+    if (!file_attachment.filename.ends_with(".json")) {
+        event.reply("Error: Only .json files are supported for training.");
+        return;
+    }
+
+    bot.request(file_attachment.url, dpp::m_get,
+                [this, event, file_attachment](const dpp::http_request_completion_t &http_event) {
+                    if (http_event.status == 200) {
+                        size_t new_size = 0;
+                        std::string import_error;
+                        bool ok = false;
+                        {
+                            std::scoped_lock lock(scd_mc_mutex);
+                            ok = scd_mc.import_model_from_json_file(http_event.body, &import_error);
+                            new_size = scd_mc.get_brain_size();
+                        }
+
+                        if (!ok) {
+                            if (import_error.size() > 1500) {
+                                import_error.resize(1500);
+                                import_error += "...";
+                            }
+
+                            event.edit_original_response(dpp::message(
+                                "Import failed for file: " + file_attachment.filename + "\n" + import_error
+                            ));
+                            return;
+                        }
+
+                        event.edit_original_response(
+                            dpp::message(
+                                "File " + file_attachment.filename + " imported!\nNew brain size: " +
+                                std::to_string(new_size) + " states."
+                            )
+                        );
+                    } else {
+                        event.edit_original_response(
+                            dpp::message(
+                                "Error downloading file: " + file_attachment.filename + "\n(HTTP Status: " +
+                                std::to_string(http_event.status) + ")")
+                        );
+                    }
+                });
+}
+
 void dpp_commands::load_from_txt(const dpp::slashcommand_t &event) {
     event.thinking(true);
 
@@ -39,15 +151,23 @@ void dpp_commands::load_from_txt(const dpp::slashcommand_t &event) {
     bot.request(file_attachment.url, dpp::m_get,
                 [this, event, file_attachment](const dpp::http_request_completion_t &http_event) {
                     if (http_event.status == 200) {
-                        size_t new_size = 0; {
-                            std::scoped_lock lock(mc_mutex);
+                        size_t new_size_mc_one = 0;
+                        size_t new_size_mc_two = 0;
+
+                        {
+                            std::scoped_lock lock(mc_mutex, scd_mc_mutex);
                             mc.load_model_from_txt_file(http_event.body);
-                            new_size = mc.get_brain_size();
+                            new_size_mc_one = mc.get_brain_size();
+
+                            scd_mc.load_model_from_txt_file(http_event.body);
+                            new_size_mc_two = scd_mc.get_brain_size();
                         }
+
                         event.edit_original_response(
                             dpp::message(
-                                "File " + file_attachment.filename + " processed!\nNew brain size: " + std::to_string(
-                                    new_size) + " states.")
+                                "File " + file_attachment.filename + " processed!\nNew brain sizes:\n1N: " +
+                                std::to_string(
+                                    new_size_mc_one) + " states.\n2N: " + std::to_string(new_size_mc_two) + " states.")
                         );
                     } else {
                         event.edit_original_response(
@@ -187,7 +307,6 @@ void dpp_commands::fetch_channel_history(const dpp::slashcommand_t &event, dpp::
                                          dpp::snowflake before_id,
                                          std::shared_ptr<std::vector<nlohmann::json> > all_json_msgs,
                                          std::shared_ptr<std::deque<dpp::snowflake> > channels_queue) {
-
     bot.messages_get(channel_id, 0, before_id, 0, 100,
                      [this, event, channel_id, all_json_msgs, channels_queue](
                  const dpp::confirmation_callback_t &callback) {

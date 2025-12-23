@@ -33,10 +33,14 @@ public:
 
     std::string generate_sentence(int max_length = 50, StatePrefix start_prefix = {}, int max_attempts = 1000) const;
 
+    // Returns true on success; returns false and fills `error` on failure.
+    bool import_model_from_json_file(const std::string &content, std::string* error = nullptr);
+
     void load_model(const std::string& filename);
     void save_model(const std::string& filename) const;
 
-    void load_model_from_txt_file(const std::string& filename);
+    // Trains further from plain text content (does NOT clear existing brain).
+    void load_model_from_txt_file(const std::string& content);
     size_t get_brain_size() const;
 };
 

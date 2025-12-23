@@ -33,6 +33,9 @@ public:
     ) : mc(mc), scd_mc(scd_mc), cfg(cfg), mc_mutex(mc_mutex), scd_mc_mutex(scd_mc_mutex), bot(bot) {
     }
 
+    void import_model_from_json_file_one_gram(const dpp::slashcommand_t &event);
+    void import_model_from_json_file_two_gram(const dpp::slashcommand_t &event);
+
     void load_from_txt(const dpp::slashcommand_t &event);
 
     void brain_status(const dpp::slashcommand_t &event);
